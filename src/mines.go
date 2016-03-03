@@ -3,10 +3,10 @@ package main
 import (
     "bufio"
     "fmt"
-    "math/rand"
+    // "math/rand"
     "os"
     "strings"
-    "time"
+    // "time"
 )
 
 const (
@@ -24,21 +24,6 @@ const (
 
 // Structs
 
-type Cell struct {
-    IsBomb      bool
-    IsMarked    bool
-    IsRevealed  bool
-    Display     string
-    Value       string
-}
-
-type GameBoard struct {
-    Rows      [][]Cell
-    Dims      int
-    State     string
-    NumMoves  int
-}
-
 type UserAction struct {
     Action    string
     Subject   string
@@ -49,183 +34,52 @@ type UserAction struct {
 var brd *GameBoard
 var rdr *bufio.Reader
 
-// Class funcs
-
-func (c Cell) String() string {
-    if brd.State == "dead" {
-        return c.Value
-    } else {
-        return c.Display
-    }
-}
-
-func (b GameBoard) String() string {
-    header := "    "
-    for x := range b.Rows {
-        header += fmt.Sprintf("%v ", string(COL_NAMES[x]))
-    }
-    brd_str := fmt.Sprintf("\n%v\n", header)
-    for i := 0; i < len(b.Rows); i++ {
-        row_str := fmt.Sprintf("%v [ ", string(ROW_NAMES[i]))
-        for j := 0; j < len(b.Rows[i]); j++ {
-            row_str += fmt.Sprintf("%v ", b.Rows[i][j])
-        }
-        row_str += fmt.Sprintf("] %v\n", string(ROW_NAMES[i]))
-
-        brd_str += row_str
-    }
-    brd_str += fmt.Sprintf("%v\n", header)
-    return brd_str
-}
-
-func (c Cell) Mark() {
-    c.IsMarked = !c.IsMarked
-    if c.IsMarked {
-        c.Display = "?"
-    } else {
-        c.Display = "-"
-    }
-}
-
-func (b GameBoard) Parse() {
-    for i := 0; i < len(b.Rows); i++ {
-        for j := 0; j < len(b.Rows[i]); j++ {
-            c := &b.Rows[i][j]
-            if c.IsBomb {
-                c.Value = "*"
-            } else {
-                val := 0
-                for i0 := i-1; i0 < i+2; i0++ {
-                    if i0 < 0 || i0 >= len(b.Rows[i]) {
-                        continue
-                    }
-                    for j0 := j-1; j0 < j+2; j0++ {
-                        if j0 < 0 || j0 >= len(b.Rows[i0]) {
-                            continue
-                        }
-                        if b.Rows[i0][j0].IsBomb {
-                            val++
-                        }
-                    }
-                }
-                if val == 0 {
-                    c.Value = " "
-                } else {
-                    c.Value = fmt.Sprintf("%v", val)
-                }
-            }
-        }
-    }
-}
-
-func (b GameBoard) Reveal(i int, j int) {
-    if b.State != "active" {
-        b.State = "active"
-    }
-    c := &b.Rows[i][j]
-    c.IsRevealed = true
-    b.NumMoves++
-    if c.IsBomb {
-        brd.State = "dead"
-        c.Value = "!"
-    } else {
-        c.Display = c.Value
-    }
-    if c.Value == " " {
-        for new_i := i-1; new_i < i+2; new_i++ {
-            if new_i < 0 || new_i >= len(b.Rows) {
-                continue
-            }
-            for new_j := j-1; new_j < j+2; new_j++ {
-                if new_j < 0 || new_j >= len(b.Rows[new_i]) {
-                    continue
-                } else if b.Rows[new_i][new_j].IsRevealed {
-                    continue
-                } else if new_i == i && new_j == j {
-                    continue
-                }
-                b.Reveal(new_i, new_j)
-            }
-        }
-    }
-}
-
 // general funcs
 
-func NewGameBoard(dim int, mine_pct float64) *GameBoard {
-    if dim == 0 {
-        dim = DEF_BOARD_SIZE
+func GetAction() (act UserAction, err error) {
+    line, rd_err := rdr.ReadString('\n')
+    if rd_err != nil {
+        return act, fmt.Errorf("Error parsing input: %v", err)
     }
-    if mine_pct == 0 {
-        mine_pct = DEF_MINE_PCT
-    }
-    r := rand.New(rand.NewSource(time.Now().UnixNano()))
-    num_mines := int(mine_pct * float64(dim * dim))
-
-    rows := make([][]Cell, dim)
-    for i := range rows {
-        rows[i] = make([]Cell, dim)
-        for j := range rows[i] {
-            is_bomb := false
-            if r.Float64() < mine_pct && num_mines > 0 {
-                is_bomb = true
-                num_mines--
-            }
-            rows[i][j] = Cell{
-                IsBomb: is_bomb,
-                IsMarked: false,
-                Display: "-",
-            }
-        }
-    }
-    new_brd := GameBoard{
-        Rows:      rows,
-        Dims:      dim,
-        State:     "new",
-        NumMoves:  0,
-    }
-
-    return &new_brd
-}
-
-func GetAction() *UserAction {
-    line, err := rdr.ReadString('\n')
-    if err != nil {
-        fmt.Printf("Error parsing input: %v", err)
-        os.Exit(1)
-    }
-    line = strings.ToLower(strings.Trim(line, "\n" ))
+    line = strings.Trim(line, "\n" )
     if line == "" {
-        return nil
+        return act, fmt.Errorf("Cannot parse empty string")
     }
     resp := strings.Split(line, " ")
-    var action, subject string
+    resp[0] = strings.ToLower(resp[0])
     if len(resp) >= 2 {
-        subject = resp[1]
+        act.Subject = resp[1]
     }
 
     if resp == nil {
-
+        err = fmt.Errorf("Unable to parse '%v'", line)
     } else if resp[0] == "reveal" || resp[0] == "r" {
-        action = "reveal"
+        act.Action = "reveal"
+        act.Subject = resp[1]
     } else if resp[0] == "mark" || resp[0] == "m" {
-        action = "mark"
+        act.Action = "mark"
+        act.Subject = resp[1]
     } else if resp[0] == "quit" || resp[0] == "q" {
-        action = "quit"
+        act.Action = "quit"
     } else if resp[0] == "help" || resp[0] == "h" {
-        action = "help"
+        act.Action = "help"
     } else {
-        fmt.Printf("Invalid action: '%v'\n", resp[0])
-        action = ""
+        err = fmt.Errorf("Invalid action: '%v'\n", resp[0])
     }
-    return &UserAction{
-        Action: action,
-        Subject: subject,
-    }
+    return act, err
 }
 
-func coord2idx(str string) int, int {
-
+func coord2idx(str string) (i int, j int, err error) {
+    if len(str) != 3 || strings.Index(str, ",") == -1 {
+        i, j = -1, -1
+        err = fmt.Errorf("Invalid coord string: '%v'", str)
+    } else {
+        i_j := strings.Split(str, ",")
+        // convert individual runes to int representation
+        i = int(i_j[0][0]) - ROW_OFFSET
+        j = int(i_j[1][0]) - COL_OFFSET
+    }
+    return i, j, err
 }
 
 // Main
@@ -235,22 +89,37 @@ func main() {
     brd = NewGameBoard(8, 0.2)
     brd.Parse()
 
-    guess := [2]int{0,0}
+    // guess := [2]int{0,0}
     for brd.State != "dead" {
+        fmt.Println(brd)
         fmt.Println("[r]eveal or [m]ark a cell: ")
-        uact := GetAction()
-        if !brd.Rows[guess[0]][guess[1]].IsRevealed {
-            fmt.Printf("Guessing %v,%v\n", string(ROW_NAMES[guess[0]]), string(COL_NAMES[guess[1]]))
-            brd.Reveal(guess[0], guess[1])
-            fmt.Println(brd)
+        uact, err := GetAction()
+        if err != nil {
+            fmt.Println(err)
+            continue
         }
-        if guess[1] < len(brd.Rows[guess[0]])-1 {
-            guess[1]++
-        } else {
-            guess[0]++
-            guess[1] = 0
+        fmt.Println(uact)
+        if uact.Action == "quit" || uact.Action == "help" {
+            break
+        } else if uact.Action == "reveal" {
+            i,j,err := coord2idx(uact.Subject)
+            if err != nil {
+                fmt.Println(err)
+                continue
+            }
+            fmt.Printf("Revealing %v,%v\n", i, j)
+            brd.Reveal(i, j)
+        } else if uact.Action == "mark" {
+            i,j,err := coord2idx(uact.Subject)
+            if err != nil {
+                fmt.Println(err)
+                continue
+            }
+            fmt.Printf("Marking %v,%v\n", i, j)
+            brd.Mark(i, j)
         }
     }
 
+    fmt.Println(brd)
     fmt.Println("Game over")
 }
