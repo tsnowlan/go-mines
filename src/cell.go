@@ -20,7 +20,7 @@ func (c Cell) String() string {
     }
 }
 
-func (c Cell) Mark() {
+func (c *Cell) Mark() {
     fmt.Println("c was: ", c.IsMarked)
     c.IsMarked = !c.IsMarked
     fmt.Println("c is:  ", c.IsMarked)
