@@ -1,8 +1,8 @@
 package main
 
-import (
+/*import (
     "fmt"
-)
+)*/
 
 type Cell struct {
     IsBomb      bool
@@ -13,7 +13,7 @@ type Cell struct {
 }
 
 func (c Cell) String() string {
-    if brd.State == "dead" {
+    if brd.State == "dead" || brd.State == "success" {
         return c.Value
     } else {
         return c.Display
@@ -21,9 +21,9 @@ func (c Cell) String() string {
 }
 
 func (c *Cell) Mark() {
-    fmt.Println("c was: ", c.IsMarked)
+    // fmt.Println("c was: ", c.IsMarked)
     c.IsMarked = !c.IsMarked
-    fmt.Println("c is:  ", c.IsMarked)
+    // fmt.Println("c is:  ", c.IsMarked)
     if c.IsMarked {
         c.Display = "?"
     } else {

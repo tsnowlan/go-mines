@@ -11,6 +11,8 @@ type GameBoard struct {
     Dims      int
     State     string
     NumMoves  int
+    Revealed  int
+    Success   int
 }
 
 func (b GameBoard) String() string {
@@ -32,12 +34,12 @@ func (b GameBoard) String() string {
     return brd_str
 }
 
-func (b GameBoard) Mark(i int, j int) {
+func (b *GameBoard) Mark(i int, j int) {
     c := &b.Rows[i][j]
     c.Mark()
 }
 
-func (b GameBoard) Parse() {
+func (b *GameBoard) Parse() {
     for i := 0; i < len(b.Rows); i++ {
         for j := 0; j < len(b.Rows[i]); j++ {
             c := &b.Rows[i][j]
@@ -68,13 +70,16 @@ func (b GameBoard) Parse() {
     }
 }
 
-func (b GameBoard) Reveal(i int, j int) (err error) {
+func (b *GameBoard) Reveal(i int, j int) (err error) {
+    cLabel := fmt.Sprintf("%v,%v", string(i+ROW_OFFSET), string(j+COL_OFFSET))
     if b.State != "active" {
         b.State = "active"
     }
     c := &b.Rows[i][j]
     if c.IsMarked {
-        err = fmt.Errorf("Cannot reveal marked cell %v,%v", string(i+ROW_OFFSET), string(j+COL_OFFSET))
+        err = fmt.Errorf("Cannot reveal marked cell %v", cLabel)
+    } else if c.IsRevealed {
+        err = fmt.Errorf("Already revealed cell %v: pick another", cLabel)
     } else {
         c.IsRevealed = true
         b.NumMoves++
@@ -84,6 +89,7 @@ func (b GameBoard) Reveal(i int, j int) (err error) {
             fmt.Println("\n\n\t*** BOOOOOM ***\n")
         } else {
             c.Display = c.Value
+            b.Revealed++
         }
         if c.Value == " " {
             for new_i := i-1; new_i < i+2; new_i++ {
@@ -102,6 +108,10 @@ func (b GameBoard) Reveal(i int, j int) (err error) {
                 }
             }
         }
+    }
+
+    if b.Revealed == b.Success {
+        b.State = "success"
     }
     return err
 }
@@ -137,6 +147,8 @@ func NewGameBoard(dim int, mine_pct float64) *GameBoard {
         Dims:      dim,
         State:     "new",
         NumMoves:  0,
+        Revealed:  0,
+        Success:   dim * dim - int(mine_pct * float64(dim * dim)),
     }
 
     return &new_brd

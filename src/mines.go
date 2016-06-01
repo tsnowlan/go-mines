@@ -69,6 +69,31 @@ func GetAction() (act UserAction, err error) {
     return act, err
 }
 
+func GetYesNo(msg string) (str string) {
+    fmt.Printf(msg)
+    resp := ""
+    for resp == "" {
+        line, rd_err := rdr.ReadString('\n')
+        if rd_err != nil {
+            fmt.Printf("Error parsing input: %v\n", rd_err)
+            fmt.Println(msg)
+            continue
+        }
+        line = strings.Trim(line, "\n" )
+        if line == "" {
+            fmt.Println("You must specify y/yes or n/no")
+            fmt.Println(msg)
+            continue
+        }
+        if strings.ToLower(line) == "y" || strings.ToLower(line) == "yes" {
+            resp = "y"
+        } else if strings.ToLower(line) == "n" || strings.ToLower(line) == "no" {
+            resp = "n"
+        }
+    }
+    return resp
+}
+
 func coord2idx(str string) (i int, j int, err error) {
     if len(str) != 3 || strings.Index(str, ",") == -1 {
         i, j = -1, -1
@@ -86,40 +111,57 @@ func coord2idx(str string) (i int, j int, err error) {
 
 func main() {
     rdr = bufio.NewReader(os.Stdin)
-    brd = NewGameBoard(8, 0.2)
-    brd.Parse()
 
-    // guess := [2]int{0,0}
-    for brd.State != "dead" {
-        fmt.Println(brd)
-        fmt.Println("[r]eveal or [m]ark a cell: ")
-        uact, err := GetAction()
-        if err != nil {
-            fmt.Println(err)
-            continue
+    for true {
+        brd = NewGameBoard(8, 0.15)
+        brd.Parse()
+
+        // guess := [2]int{0,0}
+        for brd.State != "dead" {
+            fmt.Println(brd)
+            // fmt.Printf("%v/%v revealed, board state: %v\n", brd.Revealed, brd.Success, brd.State)
+            fmt.Println("[r]eveal or [m]ark a cell: ")
+            uact, err := GetAction()
+            if err != nil {
+                fmt.Println(err)
+                continue
+            }
+            // fmt.Println(uact)
+            if uact.Action == "quit" || uact.Action == "help" {
+                break
+            } else if uact.Action == "reveal" {
+                i,j,err := coord2idx(uact.Subject)
+                if err != nil {
+                    fmt.Println(err)
+                    continue
+                }
+                // fmt.Printf("Revealing %v,%v\n", i, j)
+                err = brd.Reveal(i, j)
+                if err != nil {
+                    fmt.Printf("\n  %v\n", err)
+                }
+            } else if uact.Action == "mark" {
+                i,j,err := coord2idx(uact.Subject)
+                if err != nil {
+                    fmt.Println(err)
+                    continue
+                }
+                // fmt.Printf("Marking %v,%v\n", i, j)
+                brd.Mark(i, j)
+            }
+
+            if brd.State == "success" {
+                fmt.Println("\n\t *** Congratulations, you win! ***")
+                // brd.ShowAll()
+                break
+            }
         }
-        fmt.Println(uact)
-        if uact.Action == "quit" || uact.Action == "help" {
+
+        fmt.Println(brd)
+        fmt.Println("Game over")
+        playAgain := GetYesNo("Play again? [Y/n]  ")
+        if playAgain == "n" {
             break
-        } else if uact.Action == "reveal" {
-            i,j,err := coord2idx(uact.Subject)
-            if err != nil {
-                fmt.Println(err)
-                continue
-            }
-            fmt.Printf("Revealing %v,%v\n", i, j)
-            brd.Reveal(i, j)
-        } else if uact.Action == "mark" {
-            i,j,err := coord2idx(uact.Subject)
-            if err != nil {
-                fmt.Println(err)
-                continue
-            }
-            fmt.Printf("Marking %v,%v\n", i, j)
-            brd.Mark(i, j)
         }
     }
-
-    fmt.Println(brd)
-    fmt.Println("Game over")
 }
