@@ -36,7 +36,11 @@ func (b GameBoard) String() string {
 
 func (b *GameBoard) Mark(i int, j int) {
     c := &b.Rows[i][j]
-    c.Mark()
+    if !c.IsRevealed {
+        c.Mark()
+    } else {
+        fmt.Println("Cell has already been revealed")
+    }
 }
 
 func (b *GameBoard) Parse() {
@@ -125,20 +129,27 @@ func NewGameBoard(dim int, mine_pct float64) *GameBoard {
     }
     r := rand.New(rand.NewSource(time.Now().UnixNano()))
     num_mines := int(mine_pct * float64(dim * dim))
+    fmt.Printf("Initializing board with %v tiles and %v mines", dim * dim, num_mines)
 
     rows := make([][]Cell, dim)
-    for i := range rows {
-        rows[i] = make([]Cell, dim)
-        for j := range rows[i] {
-            is_bomb := false
-            if r.Float64() < mine_pct && num_mines > 0 {
-                is_bomb = true
-                num_mines--
+    for num_mines > 0 {
+        for i := range rows {
+            if rows[i] == nil {
+                rows[i] = make([]Cell, dim)
             }
-            rows[i][j] = Cell{
-                IsBomb: is_bomb,
-                IsMarked: false,
-                Display: "-",
+            for j := range rows[i] {
+                if &rows[i][j] == nil || !rows[i][j].IsBomb {
+                    is_bomb := false
+                    if num_mines > 0 && (r.Float64() < mine_pct || num_mines >= 0) {
+                        is_bomb = true
+                        num_mines--
+                    }
+                    rows[i][j] = Cell{
+                        IsBomb: is_bomb,
+                        IsMarked: false,
+                        Display: "-",
+                    }
+                }
             }
         }
     }
