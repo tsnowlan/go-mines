@@ -79,20 +79,20 @@ func GetYesNo(msg string, default_value string) (str string) {
             fmt.Println(msg)
             continue
         }
+
         line = strings.Trim(line, "\n" )
-        if line == "" {
-            if default_value != "" {
-                line = default_value
-            } else {
-                fmt.Println("You must specify y/yes or n/no")
-                fmt.Println(msg)
-                continue
-            }
+        if line == "" && default_value != "" {
+            line = default_value
         }
+
         if strings.ToLower(line) == "y" || strings.ToLower(line) == "yes" {
             resp = "y"
         } else if strings.ToLower(line) == "n" || strings.ToLower(line) == "no" {
             resp = "n"
+        } else {
+            fmt.Println("You must specify y/yes or n/no")
+            fmt.Println(msg)
+            continue
         }
     }
     return resp
