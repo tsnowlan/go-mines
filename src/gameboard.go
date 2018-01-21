@@ -140,7 +140,7 @@ func NewGameBoard(dim int, mine_pct float64) *GameBoard {
             for j := range rows[i] {
                 if &rows[i][j] == nil || !rows[i][j].IsBomb {
                     is_bomb := false
-                    if num_mines > 0 && (r.Float64() < mine_pct || num_mines >= 0) {
+                    if num_mines > 0 && r.Float64() < mine_pct {
                         is_bomb = true
                         num_mines--
                     }
