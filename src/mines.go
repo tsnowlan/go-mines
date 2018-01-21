@@ -115,6 +115,7 @@ func coord2idx(str string) (i int, j int, err error) {
 
 func main() {
     rdr = bufio.NewReader(os.Stdin)
+    checkReplay := true
 
     for true {
         brd = NewGameBoard(8, 0.15)
@@ -132,6 +133,8 @@ func main() {
             }
             // fmt.Println(uact)
             if uact.Action == "quit" || uact.Action == "help" {
+                brd.State = "dead"
+                checkReplay = false
                 break
             } else if uact.Action == "reveal" {
                 i,j,err := coord2idx(uact.Subject)
@@ -163,8 +166,12 @@ func main() {
 
         fmt.Println(brd)
         fmt.Println("Game over")
-        playAgain := GetYesNo("Play again? [Y/n]  ", "y")
-        if playAgain == "n" {
+        if checkReplay {
+            playAgain := GetYesNo("Play again? [Y/n]  ", "y")
+            if playAgain == "n" {
+                break
+            }
+        } else {
             break
         }
     }
