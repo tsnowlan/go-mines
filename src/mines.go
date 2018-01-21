@@ -69,7 +69,7 @@ func GetAction() (act UserAction, err error) {
     return act, err
 }
 
-func GetYesNo(msg string) (str string) {
+func GetYesNo(msg string, default_value string) (str string) {
     fmt.Printf(msg)
     resp := ""
     for resp == "" {
@@ -81,9 +81,13 @@ func GetYesNo(msg string) (str string) {
         }
         line = strings.Trim(line, "\n" )
         if line == "" {
-            fmt.Println("You must specify y/yes or n/no")
-            fmt.Println(msg)
-            continue
+            if default_value != "" {
+                line = default_value
+            } else {
+                fmt.Println("You must specify y/yes or n/no")
+                fmt.Println(msg)
+                continue
+            }
         }
         if strings.ToLower(line) == "y" || strings.ToLower(line) == "yes" {
             resp = "y"
@@ -159,7 +163,7 @@ func main() {
 
         fmt.Println(brd)
         fmt.Println("Game over")
-        playAgain := GetYesNo("Play again? [Y/n]  ")
+        playAgain := GetYesNo("Play again? [Y/n]  ", "y")
         if playAgain == "n" {
             break
         }
