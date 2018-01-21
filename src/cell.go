@@ -20,13 +20,14 @@ func (c Cell) String() string {
     }
 }
 
-func (c *Cell) Mark() {
-    // fmt.Println("c was: ", c.IsMarked)
+func (c *Cell) Mark() (net int) {
     c.IsMarked = !c.IsMarked
-    // fmt.Println("c is:  ", c.IsMarked)
     if c.IsMarked {
         c.Display = "?"
+        net = 1
     } else {
         c.Display = "-"
+        net = -1
     }
+    return net
 }

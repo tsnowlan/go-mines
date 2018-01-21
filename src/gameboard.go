@@ -11,7 +11,9 @@ type GameBoard struct {
     Dims      int
     State     string
     NumMoves  int
+    NumMines  int
     Revealed  int
+    Marked    int
     Success   int
 }
 
@@ -37,7 +39,7 @@ func (b GameBoard) String() string {
 func (b *GameBoard) Mark(i int, j int) {
     c := &b.Rows[i][j]
     if !c.IsRevealed {
-        c.Mark()
+        b.Marked += c.Mark()
     } else {
         fmt.Println("Cell has already been revealed")
     }
@@ -129,6 +131,7 @@ func NewGameBoard(dim int, mine_pct float64) *GameBoard {
     }
     r := rand.New(rand.NewSource(time.Now().UnixNano()))
     num_mines := int(mine_pct * float64(dim * dim))
+    total_mines := num_mines
     fmt.Printf("Initializing board with %v tiles and %v mines", dim * dim, num_mines)
 
     rows := make([][]Cell, dim)
@@ -158,8 +161,10 @@ func NewGameBoard(dim int, mine_pct float64) *GameBoard {
         Dims:      dim,
         State:     "new",
         NumMoves:  0,
+        NumMines:  total_mines,
         Revealed:  0,
-        Success:   dim * dim - int(mine_pct * float64(dim * dim)),
+        Marked:    0,
+        Success:   dim * dim - total_mines,
     }
 
     return &new_brd

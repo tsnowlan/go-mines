@@ -124,7 +124,7 @@ func main() {
         // guess := [2]int{0,0}
         for brd.State != "dead" {
             fmt.Println(brd)
-            fmt.Printf("%v/%v revealed, board state: %v\n", brd.Revealed, brd.Success, brd.State)
+            fmt.Printf("%v/%v revealed, %v/%v marked/bombs\n", brd.Revealed, brd.Success, brd.Marked, brd.NumMines)
             fmt.Println("[r]eveal or [m]ark a cell: ")
             uact, err := GetAction()
             if err != nil {
