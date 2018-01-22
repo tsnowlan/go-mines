@@ -7,6 +7,8 @@ import (
     "os"
     "strings"
     // "time"
+
+    ui "github.com/gizak/termui"
 )
 
 const (
@@ -116,6 +118,12 @@ func coord2idx(str string) (i int, j int, err error) {
 func main() {
     rdr = bufio.NewReader(os.Stdin)
     checkReplay := true
+
+    err := ui.Init()
+    if err != nil {
+        panic(err)
+    }
+    defer ui.Close()
 
     for true {
         brd = NewGameBoard(8, 0.15)
