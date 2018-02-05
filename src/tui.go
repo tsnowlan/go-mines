@@ -11,6 +11,8 @@ import (
     ui "github.com/gizak/termui"
 )
 
+
+
 const (
     MAX_BOARD_SIZE = 26
     MIN_BOARD_SIZE = 3
@@ -22,6 +24,9 @@ const (
     COL_NAMES = "abcdefghijklmnopqrstuvwxyz"
     ROW_OFFSET = 65
     COL_OFFSET = 97
+
+    ih = 3
+    th = 4
 )
 
 // Structs
@@ -117,7 +122,7 @@ func coord2idx(str string) (i int, j int, err error) {
 
 func main() {
     rdr = bufio.NewReader(os.Stdin)
-    checkReplay := true
+    // checkReplay := true
 
     err := ui.Init()
     if err != nil {
@@ -125,82 +130,54 @@ func main() {
     }
     defer ui.Close()
 
+    brd = NewGameBoard(8, 0.15)
+    brd.Parse()
+    fmt.Println("Generated GameBoard with dims %v", brd.Dims)
+
+    ui_width := 3 * brd.Dims + 10
+    // max_width = ui.TermWidth - 5
+
     header := ui.NewPar("Go Mines!")
     header.Height = 3
-    header.Width  = 20
-    header.Border = false
+    header.Width = ui_width
+    // header.Border = false
 
-    for true {
-        brd = NewGameBoard(8, 0.15)
-        brd.Parse()
+    board_ui := ui.NewPar(brd.String())
+    board_ui.BorderLabel = "Gameboard"
+    board_ui.Width = ui_width
+    board_ui.Height = 2 * brd.Dims
+    board_ui.Y = header.Height
 
-        board_ui := ui.NewPar(brd.String())
-        board_ui.BorderLabel  = "Gameboard"
-        board_ui.Width  = 120
-        board_ui.Height = 20
+    tb_msg := fmt.Sprintf("%v/%v revealed, %v/%v marked/bombs\n[r]eveal or [m]ark a cell", brd.Revealed, brd.Success, brd.Marked, brd.NumMines)
+    // fmt.Println("[r]eveal or [m]ark a cell: ")
+    tb := ui.NewPar(tb_msg)
+    tb.Height = th
+    tb.Y = board_ui.Y + board_ui.Height
+    tb.Width = ui_width
 
-        ui.Render(header, board_ui)
+    ib := ui.NewPar("")
+	ib.Height = ih
+	ib.BorderLabel = "Input"
+	ib.BorderLabelFg = ui.ColorYellow
+	ib.BorderFg = ui.ColorYellow
+	ib.TextFgColor = ui.ColorWhite
+    ib.Y = tb.Y + tb.Height
+    ib.Width = ui_width
 
-        ui.Handle("/sys/kbd/q", func(ui.Event) {
-            ui.StopLoop()
-        })
-        ui.Handle("/sys/kbd/r", func(ui.Event) {
-            ui.StopLoop()
-        })
-        ui.Loop()
+    ui.Body.AddRows(
+        ui.NewRow(ui.NewCol(12, 0, header)),
+        ui.NewRow(ui.NewCol(12, 0, board_ui)),
+        ui.NewRow(ui.NewCol(12, 0, tb)),
+        ui.NewRow(ui.NewCol(12, 0, ib)))
 
-        // guess := [2]int{0,0}
-        for brd.State != "dead" {
-            fmt.Println(brd)
-            fmt.Printf("%v/%v revealed, %v/%v marked/bombs\n", brd.Revealed, brd.Success, brd.Marked, brd.NumMines)
-            fmt.Println("[r]eveal or [m]ark a cell: ")
-            uact, err := GetAction()
-            if err != nil {
-                fmt.Println(err)
-                continue
-            }
-            // fmt.Println(uact)
-            if uact.Action == "quit" || uact.Action == "help" {
-                brd.State = "dead"
-                checkReplay = false
-                break
-            } else if uact.Action == "reveal" {
-                i,j,err := coord2idx(uact.Subject)
-                if err != nil {
-                    fmt.Println(err)
-                    continue
-                }
-                // fmt.Printf("Revealing %v,%v\n", i, j)
-                err = brd.Reveal(i, j)
-                if err != nil {
-                    fmt.Printf("\n  %v\n", err)
-                }
-            } else if uact.Action == "mark" {
-                i,j,err := coord2idx(uact.Subject)
-                if err != nil {
-                    fmt.Println(err)
-                    continue
-                }
-                // fmt.Printf("Marking %v,%v\n", i, j)
-                brd.Mark(i, j)
-            }
+    ui.Render(ui.Body)
 
-            if brd.State == "success" {
-                fmt.Println("\n\t *** Congratulations, you win! ***")
-                // brd.ShowAll()
-                break
-            }
-        }
+    ui.Handle("/sys/kbd/q", func(ui.Event) {
+        ui.StopLoop()
+    })
+    ui.Handle("/sys/kbd/r", func(ui.Event) {
+        ui.StopLoop()
+    })
+    ui.Loop()
 
-        fmt.Println(brd)
-        fmt.Println("Game over")
-        if checkReplay {
-            playAgain := GetYesNo("Play again? [Y/n]  ", "y")
-            if playAgain == "n" {
-                break
-            }
-        } else {
-            break
-        }
-    }
 }

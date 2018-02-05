@@ -18,13 +18,14 @@ type GameBoard struct {
 }
 
 func (b GameBoard) String() string {
-    header := "    "
+    padding := "    "
+    header := padding + padding
     for x := range b.Rows {
         header += fmt.Sprintf("%v ", string(COL_NAMES[x]))
     }
     brd_str := fmt.Sprintf("\n%v\n", header)
     for i := 0; i < len(b.Rows); i++ {
-        row_str := fmt.Sprintf("%v [ ", string(ROW_NAMES[i]))
+        row_str := fmt.Sprintf("%v%v [ ", padding, string(ROW_NAMES[i]))
         for j := 0; j < len(b.Rows[i]); j++ {
             row_str += fmt.Sprintf("%v ", b.Rows[i][j])
         }
