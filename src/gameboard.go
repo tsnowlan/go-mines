@@ -132,7 +132,7 @@ func NewGameBoard(dim int, mine_pct float64) *GameBoard {
     r := rand.New(rand.NewSource(time.Now().UnixNano()))
     num_mines := int(mine_pct * float64(dim * dim))
     total_mines := num_mines
-    fmt.Printf("Initializing board with %v tiles and %v mines", dim * dim, num_mines)
+    // fmt.Printf("Initializing board with %v tiles and %v mines", dim * dim, num_mines)
 
     rows := make([][]Cell, dim)
     for num_mines > 0 {
